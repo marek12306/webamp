@@ -6,6 +6,7 @@ import {
   MEDIA_TAG_REQUEST_INITIALIZED,
   MEDIA_TAG_REQUEST_FAILED,
   ADD_TRACK_FROM_URL,
+  SET_MEDIA_TITLE,
 } from "../actionTypes";
 import { MEDIA_TAG_REQUEST_STATUS } from "../constants";
 import * as TrackUtils from "../trackUtils";
@@ -64,6 +65,15 @@ const tracks = (
         [action.id]: {
           ...state[action.id],
           duration: action.duration,
+        },
+      };
+    }
+    case SET_MEDIA_TITLE: {
+      return {
+        ...state,
+        [action.id]: {
+          ...state[action.id],
+          defaultName: action.title,
         },
       };
     }

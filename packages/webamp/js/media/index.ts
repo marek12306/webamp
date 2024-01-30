@@ -4,6 +4,7 @@ import { Band } from "../types";
 import Emitter from "../emitter";
 import StereoBalanceNode from "./StereoBalanceNode";
 import ElementSource from "./elementSource";
+import IcecastMetadataPlayer from "icecast-metadata-player";
 
 interface StereoBalanceNodeType extends AudioNode {
   constructor(context: AudioContext): StereoBalanceNodeType;
@@ -25,6 +26,7 @@ export default class Media {
   _gainNode: GainNode;
   _source: ElementSource;
   _bands: { [band: number]: BiquadFilterNode };
+  _metadataPlayer: IcecastMetadataPlayer | undefined;
 
   constructor() {
     this._emitter = new Emitter();
@@ -94,26 +96,7 @@ export default class Media {
     //              <destination>
 
     this._source = new ElementSource(this._context, this._staticSource);
-
-    this._source.on("positionChange", () => {
-      this._emitter.trigger("timeupdate");
-    });
-    this._source.on("ended", () => {
-      this._emitter.trigger("ended");
-    });
-    this._source.on("statusChange", () => {
-      switch (this._source.getStatus()) {
-        case MEDIA_STATUS.PLAYING:
-          this._emitter.trigger("playing");
-          break;
-      }
-      this._emitter.trigger("timeupdate");
-    });
-    this._source.on("loaded", () => {
-      this._emitter.trigger("fileLoaded");
-    });
-
-    this._staticSource.connect(this._preamp);
+    this.initializeElementSource();
 
     let output = this._preamp;
     this._bands = {};
@@ -147,6 +130,30 @@ export default class Media {
     this._gainNode.connect(this._context.destination);
   }
 
+  initializeElementSource() {
+    this._source.on("positionChange", () => {
+      this._emitter.trigger("timeupdate");
+    });
+    this._source.on("ended", () => {
+      this._emitter.trigger("ended");
+    });
+    this._source.on("statusChange", () => {
+      switch (this._source.getStatus()) {
+        case MEDIA_STATUS.PLAYING:
+          this._emitter.trigger("playing");
+          break;
+      }
+      this._emitter.trigger("timeupdate");
+    });
+    this._source.on("loaded", () => {
+      this._emitter.trigger("fileLoaded");
+    });
+
+    this._source.initializeElementSource();
+
+    this._staticSource.connect(this._preamp);
+  }
+
   getAnalyser() {
     return this._analyser;
   }
@@ -170,19 +177,33 @@ export default class Media {
 
   /* Actions */
   async play() {
-    await this._source.play();
+    if (this._metadataPlayer) {
+      this._metadataPlayer.play();
+    } else {
+      await this._source.play();
+    }
   }
 
   pause() {
-    this._source.pause();
+    if (this._metadataPlayer) {
+      this.stop();
+    } else {
+      this._source.pause();
+    }
   }
 
   stop() {
-    this._source.stop();
+    if (this._metadataPlayer) {
+      this._emitter.trigger("metadataChange", null);
+      this._metadataPlayer.stop();
+    } else {
+      this._source.stop();
+    }
   }
 
   /* Actions with arguments */
   seekToPercentComplete(percent: number) {
+    if (this._metadataPlayer) return;
     const seekTime = this.duration() * (percent / 100);
     this.seekToTime(seekTime);
   }
@@ -231,10 +252,31 @@ export default class Media {
     this._source.seekToTime(time);
   }
 
+  onStats(stats: any) {
+    const title = stats.StreamTitle ?? `${stats.ARTIST} - ${stats.TITLE}`;
+    this._emitter.trigger("metadataChange", title);
+  }
+
   // Used only for the initial load, since it must have a CORS header
   async loadFromUrl(url: string, autoPlay: boolean) {
     this._emitter.trigger("waiting");
-    await this._source.loadUrl(url);
+
+    this._source.dispose();
+    this._source = new ElementSource(this._context, this._staticSource);
+    if (!url.startsWith("blob")) {
+      this._metadataPlayer = new IcecastMetadataPlayer(url, {
+        onMetadata: (stats: any) => this.onStats(stats),
+        audioElement: this._source._audio,
+        enableLogging: true,
+        icyDetectionTimeout: 0,
+      });
+    } else {
+      this._metadataPlayer = undefined;
+      await this._source.loadUrl(url);
+    }
+    this.initializeElementSource();
+
+    console.log(this._metadataPlayer);
     // TODO #race
     this._emitter.trigger("stopWaiting");
     if (autoPlay) {
@@ -243,6 +285,7 @@ export default class Media {
   }
 
   dispose() {
+    this._metadataPlayer?.stop();
     this._source.dispose();
     this._emitter.dispose();
   }

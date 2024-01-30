@@ -54,11 +54,11 @@ window.addEventListener("drop", supressDragAndDrop);
 
 try {
   // TODO: Get this working in Parcel.
-  const COMMITHASH = undefined;
-  Sentry.init({
-    dsn: "https://12b6be8ef7c44f28ac37ab5ed98fd294@sentry.io/146021",
-    release: typeof COMMITHASH === "undefined" ? "DEV" : COMMITHASH,
-  });
+  // const COMMITHASH = undefined;
+  // Sentry.init({
+  //   dsn: "https://12b6be8ef7c44f28ac37ab5ed98fd294@sentry.io/146021",
+  //   release: typeof COMMITHASH === "undefined" ? "DEV" : COMMITHASH,
+  // });
 } catch (e) {
   // Archive.org tries to rewrite the DSN to point to a archive.org version
   // since it looks like a URL. When this happens, Sentry crashes.

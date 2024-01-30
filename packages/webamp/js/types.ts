@@ -275,6 +275,11 @@ export type Action =
       channels: number;
     }
   | {
+      type: "SET_MEDIA_TITLE";
+      id: number;
+      title: string | null;
+    }
+  | {
       type: "SET_VOLUME";
       volume: number;
     }

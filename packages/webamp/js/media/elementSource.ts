@@ -25,6 +25,11 @@ export default class ElementSource {
     this._stalled = false;
     this._status = MEDIA_STATUS.STOPPED;
 
+    this._source = this._context.createMediaElementSource(this._audio);
+    this._source.connect(destination);
+  }
+
+  initializeElementSource() {
     // TODO: #leak
     this._audio.addEventListener("suspend", () => {
       this._setStalled(true);
@@ -78,9 +83,6 @@ export default class ElementSource {
       this._emitter.trigger("ended");
       this._setStatus(MEDIA_STATUS.STOPPED);
     });
-
-    this._source = this._context.createMediaElementSource(this._audio);
-    this._source.connect(destination);
   }
 
   _setStalled(stalled: boolean) {
