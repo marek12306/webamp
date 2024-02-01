@@ -15,7 +15,7 @@ export function genMediaTags(
   );
 
   const options = {
-    duration: true,
+    duration: false, // don't read the duration for radio!
     skipPostHeaders: true, // avoid unnecessary data to be read
   };
 

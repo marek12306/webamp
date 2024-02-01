@@ -345,6 +345,28 @@ class Webamp {
     });
   }
 
+  onTitleDidChange(cb: (title: string | null) => void): () => void {
+    let previousTitle: string | null = null;
+    return this.store.subscribe(() => {
+      const state = this.store.getState();
+      
+      const trackId = Selectors.getCurrentlyPlayingTrackIdIfLoaded(state);
+      if (trackId == null) {
+        cb(null);
+        return
+      }
+
+      const track = state.tracks[trackId];
+      const currentTitle = track.title ?? track.defaultName;
+      if (previousTitle == currentTitle) {
+        return
+      }
+      previousTitle = currentTitle;
+
+      cb(currentTitle?.length == 0 ? null : currentTitle);
+    });
+  }
+
   /**
    * A callback which will be called when Webamp is minimized.
    *

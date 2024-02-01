@@ -73,7 +73,7 @@ const tracks = (
         ...state,
         [action.id]: {
           ...state[action.id],
-          defaultName: action.title,
+          title: action.title,
         },
       };
     }

@@ -27,6 +27,7 @@ export default class Media {
   _source: ElementSource;
   _bands: { [band: number]: BiquadFilterNode };
   _metadataPlayer: IcecastMetadataPlayer | undefined;
+  _radioTitle: string | null = null;
 
   constructor() {
     this._emitter = new Emitter();
@@ -253,7 +254,10 @@ export default class Media {
   }
 
   onStats(stats: any) {
-    const title = stats.StreamTitle ?? `${stats.ARTIST} - ${stats.TITLE}`;
+    let title = stats.StreamTitle ?? `${stats.ARTIST} - ${stats.TITLE}`;
+    if (this._radioTitle) {
+      title += ` (${this._radioTitle})`;
+    }
     this._emitter.trigger("metadataChange", title);
   }
 
@@ -264,6 +268,8 @@ export default class Media {
     this._source.dispose();
     this._source = new ElementSource(this._context, this._staticSource);
     if (!url.startsWith("blob")) {
+      const response = await fetch(url);
+      this._radioTitle = response.headers.get("icy-name");
       this._metadataPlayer = new IcecastMetadataPlayer(url, {
         onMetadata: (stats: any) => this.onStats(stats),
         audioElement: this._source._audio,
@@ -272,11 +278,11 @@ export default class Media {
       });
     } else {
       this._metadataPlayer = undefined;
+      this._radioTitle = null;
       await this._source.loadUrl(url);
     }
     this.initializeElementSource();
 
-    console.log(this._metadataPlayer);
     // TODO #race
     this._emitter.trigger("stopWaiting");
     if (autoPlay) {

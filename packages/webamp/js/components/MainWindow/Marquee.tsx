@@ -7,7 +7,7 @@ import * as Selectors from "../../selectors";
 import { useTypedSelector, useActionCreator } from "../../hooks";
 import * as Utils from "../../utils";
 
-const SEPARATOR = "  ***  ";
+const SEPARATOR = "       ";
 
 const CHAR_WIDTH = 5;
 const MARQUEE_MAX_LENGTH = 31;

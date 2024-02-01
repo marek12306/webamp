@@ -67,7 +67,7 @@ export const getTimeStr = (
   time: number | null,
   truncate: boolean = true
 ): string => {
-  if (time == null) {
+  if (time == null || !isFinite(time) || time <= 0) {
     return "";
   }
   const {

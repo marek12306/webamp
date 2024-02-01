@@ -42,9 +42,7 @@ function PlaylistShade() {
       : name;
   }, [addedWidth, name]);
 
-  const time = useMemo(() => {
-    return name == null ? "" : getTimeStr(duration);
-  }, [duration, name]);
+  const time = useMemo(() => getTimeStr(duration), [duration, name]);
 
   return (
     <div

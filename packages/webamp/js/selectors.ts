@@ -389,10 +389,12 @@ export const getMinimalMediaText = createSelector(
 export const getMediaText = createSelector(
   getMinimalMediaText,
   getDuration,
-  (minimalMediaText, duration) =>
-    minimalMediaText == null
+  (minimalMediaText, duration) => {
+    let time = Utils.getTimeStr(duration);
+    return minimalMediaText == null
       ? null
-      : `${minimalMediaText} (${Utils.getTimeStr(duration)})`
+      : `${minimalMediaText} ${time ? `(${time})` : ""}`;
+  }
 );
 
 export const getNumberOfTracks = (state: AppState) =>
