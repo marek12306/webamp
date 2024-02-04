@@ -195,7 +195,7 @@ export default class Media {
 
   stop() {
     if (this._metadataPlayer) {
-      this._emitter.trigger("metadataChange", null);
+      this._emitter.trigger("streanMetadataChange", null, null, null);
       this._metadataPlayer.stop();
     } else {
       this._source.stop();
@@ -254,11 +254,22 @@ export default class Media {
   }
 
   onStats(stats: any) {
-    let title = stats.StreamTitle ?? `${stats.ARTIST} - ${stats.TITLE}`;
-    if (this._radioTitle) {
-      title += ` (${this._radioTitle})`;
+    if (stats.TITLE != undefined) {
+      this._emitter.trigger(
+        "streamMetadataChange",
+        stats.ARTIST,
+        stats.TITLE,
+        this._radioTitle
+      );
+    } else if (stats.StreamTitle != undefined) {
+      const splitted = stats.StreamTitle.split(" - ");
+      this._emitter.trigger(
+        "streamMetadataChange",
+        splitted[0],
+        splitted.slice(1).join(" - "),
+        this._radioTitle
+      );
     }
-    this._emitter.trigger("metadataChange", title);
   }
 
   // Used only for the initial load, since it must have a CORS header
@@ -268,14 +279,22 @@ export default class Media {
     this._source.dispose();
     this._source = new ElementSource(this._context, this._staticSource);
     if (!url.startsWith("blob")) {
-      const response = await fetch(url);
+      const controller = new AbortController();
+      const response = await fetch(url, {
+        signal: controller.signal,
+      });
       this._radioTitle = response.headers.get("icy-name");
+      const metaint = response.headers.get("icy-metaint");
+      if (this._metadataPlayer) this._metadataPlayer.stop();
       this._metadataPlayer = new IcecastMetadataPlayer(url, {
         onMetadata: (stats: any) => this.onStats(stats),
         audioElement: this._source._audio,
         enableLogging: true,
         icyDetectionTimeout: 0,
+        icyMetaInt: metaint ? parseInt(metaint) : undefined,
       });
+      controller.abort();
+      console.log(this._metadataPlayer);
     } else {
       this._metadataPlayer = undefined;
       this._radioTitle = null;

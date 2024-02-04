@@ -124,11 +124,12 @@ async function main() {
     });
   }
 
-  webamp.onTrackDidChange((track) => {
+
+  webamp.onMetadataDidChange((artist, title, stationName) => {
     document.title =
-      track == null
+      title == null
         ? DEFAULT_DOCUMENT_TITLE
-        : `${track.metaData.title} - ${track.metaData.artist} \u00B7 ${DEFAULT_DOCUMENT_TITLE}`;
+        : `${artist} - ${title}${stationName ? ` (${stationName})` : ""} \u00B7 ${DEFAULT_DOCUMENT_TITLE}`;
   });
 
   enableMediaSession(webamp);

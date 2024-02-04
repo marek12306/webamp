@@ -3,6 +3,16 @@ import { WebampLazy } from "./Webamp";
 export default function enableMediaSession(webamp: WebampLazy) {
   if ("mediaSession" in navigator) {
     /* global MediaMetadata */
+    webamp.onMetadataDidChange((artist, title, stationName) => {
+      if (!title) {
+        return;
+      }
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist: artist || undefined,
+      });
+    });
+
     webamp.onTrackDidChange((track) => {
       if (track == null) {
         return;
@@ -10,11 +20,14 @@ export default function enableMediaSession(webamp: WebampLazy) {
       const {
         metaData: { title, artist, album, albumArtUrl },
       } = track;
+      if (!title) {
+        return;
+      }
       // @ts-ignore TypeScript does not know about the Media Session API: https://github.com/Microsoft/TypeScript/issues/19473
       navigator.mediaSession.metadata = new MediaMetadata({
         title,
-        artist,
-        album,
+        artist: artist || undefined,
+        album: album || undefined,
         artwork: albumArtUrl
           ? [
               {

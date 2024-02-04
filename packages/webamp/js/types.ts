@@ -275,9 +275,11 @@ export type Action =
       channels: number;
     }
   | {
-      type: "SET_MEDIA_TITLE";
+      type: "SET_STREAM_MEDIA";
       id: number;
+      artist: string | null;
       title: string | null;
+      stationName: string | null;
     }
   | {
       type: "SET_VOLUME";
@@ -796,6 +798,7 @@ export interface PlaylistTrack {
   kbps?: string;
   khz: string;
   channels?: number;
+  stationName?: string;
 }
 
 export interface AppState {

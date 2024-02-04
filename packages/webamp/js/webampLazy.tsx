@@ -345,14 +345,14 @@ class Webamp {
     });
   }
 
-  onTitleDidChange(cb: (title: string | null) => void): () => void {
+  onMetadataDidChange(cb: (artist: string | null, title: string | null, stationName: string | null) => void): () => void {
     let previousTitle: string | null = null;
     return this.store.subscribe(() => {
       const state = this.store.getState();
       
       const trackId = Selectors.getCurrentlyPlayingTrackIdIfLoaded(state);
       if (trackId == null) {
-        cb(null);
+        cb(null, null, null);
         return
       }
 
@@ -363,7 +363,9 @@ class Webamp {
       }
       previousTitle = currentTitle;
 
-      cb(currentTitle?.length == 0 ? null : currentTitle);
+      const artist = track.artist;
+      const stationName = track.stationName;
+      cb(artist || null, currentTitle || null, stationName || null);
     });
   }
 

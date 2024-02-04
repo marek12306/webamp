@@ -17,7 +17,7 @@ import {
   PLAY_TRACK,
   BUFFER_TRACK,
   LOAD_SERIALIZED_STATE,
-  SET_MEDIA_TITLE,
+  SET_STREAM_MEDIA,
 } from "./actionTypes";
 import { next as nextTrack } from "./actionCreators";
 import * as Selectors from "./selectors";
@@ -76,7 +76,7 @@ export default (media: Media) => (store: MiddlewareStore) => {
     });
   });
 
-  media.on("metadataChange", (title) => {
+  media.on("streamMetadataChange", (artist, title, stationName) => {
     const id = Selectors.getCurrentTrackId(store.getState());
     if (id == null) {
       // Attempted to set the metadata for a track that was already removed.
@@ -85,8 +85,10 @@ export default (media: Media) => (store: MiddlewareStore) => {
     }
     store.dispatch({
       id,
-      type: SET_MEDIA_TITLE,
+      type: SET_STREAM_MEDIA,
+      artist,
       title,
+      stationName,
     });
   });
 

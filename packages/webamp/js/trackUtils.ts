@@ -4,8 +4,10 @@ import * as FileUtils from "./fileUtils";
 
 export const trackName = Utils.weakMapMemoize(
   (track: PlaylistTrack): string => {
-    const { artist, title, defaultName, url } = track;
-    if (artist && title) {
+    const { artist, title, defaultName, url, stationName } = track;
+    if (artist && title && stationName) {
+      return `${artist} - ${title} (${stationName})`;
+    } else if (artist && title) {
       return `${artist} - ${title}`;
     } else if (title) {
       return title;
