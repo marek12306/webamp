@@ -239,7 +239,7 @@ export function loadMediaFile(
 ): Thunk {
   return (dispatch) => {
     const id = Utils.uniqueId();
-    const { defaultName, metaData, duration } = track;
+    const { defaultName, metaData, duration, streamInfo } = track;
     let canonicalUrl: string;
     if ("url" in track) {
       canonicalUrl = track.url.toString();
@@ -285,14 +285,25 @@ export function loadMediaFile(
         // For now, we lie about these next three things.
         // TODO: Ideally we would leave these as null and force a media data
         // fetch when the user starts playing.
-        sampleRate: 44000,
-        bitrate: 192000,
-        numberOfChannels: 2,
+        sampleRate: streamInfo?.sampleRate ?? 44000,
+        bitrate: streamInfo?.bitrate ?? 192000,
+        numberOfChannels: streamInfo?.numberOfChannels ?? 2,
         id,
       });
     } else if ("blob" in track) {
       // Blobs can be loaded quickly
       dispatch(fetchMediaTags(track.blob, id));
+    } else if (streamInfo) {
+      const { sampleRate, bitrate, numberOfChannels } = streamInfo;
+      dispatch({
+        type: SET_MEDIA_TAGS,
+        artist: "",
+        title: "",
+        sampleRate,
+        bitrate,
+        numberOfChannels,
+        id,
+      });
     } else {
       dispatch(queueFetchingMediaTags(id));
     }
@@ -316,39 +327,30 @@ function queueFetchingMediaTags(id: number): Thunk {
 
 export function fetchMediaTags(file: string | Blob, id: number): Thunk {
   return async (dispatch, getState, { requireMusicMetadata }) => {
-    // dispatch({ type: MEDIA_TAG_REQUEST_INITIALIZED, id });
-    dispatch({
-      type: SET_MEDIA_TAGS,
-      artist: "",
-      title: "",
-      numberOfChannels: 2,
-      bitrate: 320000,
-      sampleRate: 44000,
-      id,
-    });
+    dispatch({ type: MEDIA_TAG_REQUEST_INITIALIZED, id });
 
     try {
-      // const metadata = await genMediaTags(file, await requireMusicMetadata());
-      // // There's more data here, but we don't have a use for it yet:
-      // const { artist, title, album, picture } = metadata.common;
-      // const { numberOfChannels, bitrate, sampleRate } = metadata.format;
-      // let albumArtUrl = null;
-      // if (picture && picture.length >= 1) {
-      //   const byteArray = new Uint8Array(picture[0].data);
-      //   const blob = new Blob([byteArray], { type: picture[0].format });
-      //   albumArtUrl = URL.createObjectURL(blob);
-      // }
-      // dispatch({
-      //   type: SET_MEDIA_TAGS,
-      //   artist: artist ? artist : "",
-      //   title: title ? title : "",
-      //   album,
-      //   albumArtUrl,
-      //   numberOfChannels,
-      //   bitrate,
-      //   sampleRate,
-      //   id,
-      // });
+      const metadata = await genMediaTags(file, await requireMusicMetadata());
+      // There's more data here, but we don't have a use for it yet:
+      const { artist, title, album, picture } = metadata.common;
+      const { numberOfChannels, bitrate, sampleRate } = metadata.format;
+      let albumArtUrl = null;
+      if (picture && picture.length >= 1) {
+        const byteArray = new Uint8Array(picture[0].data);
+        const blob = new Blob([byteArray], { type: picture[0].format });
+        albumArtUrl = URL.createObjectURL(blob);
+      }
+      dispatch({
+        type: SET_MEDIA_TAGS,
+        artist: artist ? artist : "",
+        title: title ? title : "",
+        album,
+        albumArtUrl,
+        numberOfChannels,
+        bitrate,
+        sampleRate,
+        id,
+      });
     } catch (e) {
       dispatch({ type: MEDIA_TAG_REQUEST_FAILED, id });
     }

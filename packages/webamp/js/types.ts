@@ -606,6 +606,12 @@ interface TrackInfo {
    * Example: 95
    */
   duration?: number;
+
+  streamInfo?: {
+    bitrate: number;
+    sampleRate: number;
+    numberOfChannels: number;
+  };
 }
 
 export interface URLTrack extends TrackInfo {
